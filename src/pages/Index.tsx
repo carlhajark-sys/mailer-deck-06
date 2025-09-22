@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Server } from '@/types';
-import { useSupabaseDashboard } from '@/hooks/useSupabaseDashboard';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { ServerTable } from '@/components/ServerTable';
 import { ServerModal } from '@/components/ServerModal';
 import { IPDomainModal } from '@/components/IPDomainModal';
@@ -24,7 +24,7 @@ const Index = () => {
     deleteIP,
     updateDomains,
     loading
-  } = useSupabaseDashboard();
+  } = useSupabaseData();
 
   const [showServerModal, setShowServerModal] = useState(false);
   const [showIPModal, setShowIPModal] = useState(false);

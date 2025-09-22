@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User } from '@/types';
-import { useSupabaseDashboard } from '@/hooks/useSupabaseDashboard';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { UserTable } from '@/components/UserTable';
 import { UserModal } from '@/components/UserModal';
 import { SearchBar } from '@/components/SearchBar';
@@ -18,7 +18,7 @@ const Users = () => {
     updateUser,
     deleteUser,
     loading
-  } = useSupabaseDashboard();
+  } = useSupabaseData();
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
