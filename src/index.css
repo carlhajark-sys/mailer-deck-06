@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Google Material Design inspired system */
+
+@layer base {
+  :root {
+    /* Background & surfaces */
+    --background: 0 0% 98%;
+    --surface: 0 0% 100%;
+    --surface-variant: 220 14% 96%;
+    --foreground: 220 9% 13%;
+    
+    /* Google Blue palette */
+    --primary: 210 79% 46%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 210 79% 41%;
+    --primary-light: 210 79% 93%;
+    
+    /* Secondary colors */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 13%;
+    --secondary-hover: 220 14% 91%;
+    
+    /* Status colors */
+    --success: 122 39% 49%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 122 39% 95%;
+    
+    --warning: 35 91% 65%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 35 91% 95%;
+    
+    --error: 0 72% 51%;
+    --error-foreground: 0 0% 100%;
+    --error-light: 0 72% 95%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    --info-light: 199 89% 95%;
+    
+    /* Neutral colors */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --border: 220 14% 91%;
+    --input: 220 14% 91%;
+    --ring: 210 79% 46%;
+    
+    /* Card & elevation */
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 13%;
+    --shadow-elevation-1: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 13%;
+    
+    /* Accent */
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 9% 13%;
+    
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    
+    /* Border radius */
+    --radius: 0.5rem;
+    --radius-sm: 0.25rem;
+    --radius-lg: 0.75rem;
+    
+    /* Transitions */
+    --transition-fast: all 0.15s ease-out;
+    --transition-normal: all 0.2s ease-out;
+    --transition-slow: all 0.3s ease-out;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  /* Material Design elevation shadows */
+  .elevation-1 {
+    box-shadow: var(--shadow-elevation-1);
+  }
+  
+  .elevation-2 {
+    box-shadow: var(--shadow-elevation-2);
+  }
+  
+  .elevation-3 {
+    box-shadow: var(--shadow-elevation-3);
+  }
+  
+  /* Status indicators */
+  .status-production {
+    @apply bg-success text-success-foreground;
+  }
+  
+  .status-test {
+    @apply bg-info text-info-foreground;
+  }
+  
+  .status-down {
+    @apply bg-error text-error-foreground;
+  }
+  
+  .status-timeout {
+    @apply bg-warning text-warning-foreground;
+  }
+}
