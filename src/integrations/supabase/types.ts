@@ -14,7 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          ip_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          ip_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          ip_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domains_ip_id_fkey"
+            columns: ["ip_id"]
+            isOneToOne: false
+            referencedRelation: "ips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ips: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          server_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          server_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          server_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ips_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servers: {
+        Row: {
+          assigned_user_id: string | null
+          created_at: string
+          id: string
+          main_ip: string
+          name: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          main_ip: string
+          name: string
+          notes?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          main_ip?: string
+          name?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servers_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
