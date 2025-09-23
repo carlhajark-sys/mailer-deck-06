@@ -330,26 +330,173 @@ export const useSupabaseData = () => {
     }
   }, [toast]);
 
-  // Placeholder functions for IP and domain management (to be implemented if needed)
+  // IP validation helper
+  const isValidIP = (ip: string) => {
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    return ipRegex.test(ip.trim());
+  };
+
   const addIPToServer = useCallback(async (serverId: string, ipAddresses: string[]) => {
-    toast({
-      title: "Feature coming soon",
-      description: "IP management will be implemented next"
-    });
-  }, [toast]);
+    try {
+      // Validate IP addresses
+      const invalidIPs = ipAddresses.filter(ip => !isValidIP(ip));
+      if (invalidIPs.length > 0) {
+        toast({
+          title: "Invalid IP addresses",
+          description: `Invalid IPs: ${invalidIPs.join(', ')}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Check for duplicates
+      const server = servers.find(s => s.id === serverId);
+      if (!server) {
+        toast({
+          title: "Error",
+          description: "Server not found",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const existingIPs = server.ips.map(ip => ip.address);
+      const duplicateIPs = ipAddresses.filter(ip => existingIPs.includes(ip.trim()));
+      
+      if (duplicateIPs.length > 0) {
+        toast({
+          title: "Duplicate IP addresses",
+          description: `IPs already exist: ${duplicateIPs.join(', ')}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Insert IPs into database
+      const ipInserts = ipAddresses.map(ip => ({
+        address: ip.trim(),
+        server_id: serverId
+      }));
+
+      const { data, error } = await supabase
+        .from('ips')
+        .insert(ipInserts)
+        .select('*');
+
+      if (error) throw error;
+
+      // Update local state
+      const newIPs: IP[] = data.map(ip => ({
+        id: ip.id,
+        address: ip.address,
+        serverId: ip.server_id,
+        domains: []
+      }));
+
+      setServers(prevServers => 
+        prevServers.map(server => 
+          server.id === serverId 
+            ? { ...server, ips: [...server.ips, ...newIPs] }
+            : server
+        )
+      );
+
+      toast({
+        title: "IPs added",
+        description: `Successfully added ${ipAddresses.length} IP(s)`
+      });
+    } catch (error) {
+      console.error('Error adding IPs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add IP addresses",
+        variant: "destructive"
+      });
+    }
+  }, [servers, toast]);
 
   const deleteIP = useCallback(async (serverId: string, ipId: string) => {
-    toast({
-      title: "Feature coming soon", 
-      description: "IP management will be implemented next"
-    });
+    try {
+      // Delete IP from database (this will cascade delete domains)
+      const { error } = await supabase
+        .from('ips')
+        .delete()
+        .eq('id', ipId);
+
+      if (error) throw error;
+
+      // Update local state
+      setServers(prevServers => 
+        prevServers.map(server => 
+          server.id === serverId 
+            ? { ...server, ips: server.ips.filter(ip => ip.id !== ipId) }
+            : server
+        )
+      );
+
+      toast({
+        title: "IP deleted",
+        description: "IP address and associated domains removed"
+      });
+    } catch (error) {
+      console.error('Error deleting IP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete IP address",
+        variant: "destructive"
+      });
+    }
   }, [toast]);
 
   const updateDomains = useCallback(async (serverId: string, ipId: string, domains: Domain[]) => {
-    toast({
-      title: "Feature coming soon",
-      description: "Domain management will be implemented next"
-    });
+    try {
+      // First, delete existing domains for this IP
+      await supabase
+        .from('domains')
+        .delete()
+        .eq('ip_id', ipId);
+
+      // Then insert new domains
+      if (domains.length > 0) {
+        const domainInserts = domains.map(domain => ({
+          domain: domain.domain,
+          type: domain.type,
+          ip_id: ipId
+        }));
+
+        const { error: insertError } = await supabase
+          .from('domains')
+          .insert(domainInserts);
+
+        if (insertError) throw insertError;
+      }
+
+      // Update local state
+      setServers(prevServers => 
+        prevServers.map(server => 
+          server.id === serverId 
+            ? {
+                ...server,
+                ips: server.ips.map(ip => 
+                  ip.id === ipId ? { ...ip, domains } : ip
+                )
+              }
+            : server
+        )
+      );
+
+      toast({
+        title: "Domains updated",
+        description: "Domain list has been updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating domains:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update domains",
+        variant: "destructive"
+      });
+    }
   }, [toast]);
 
   return {
