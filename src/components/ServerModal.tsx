@@ -25,7 +25,7 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
     name: '',
     mainIp: '',
     status: 'Test' as ServerStatus,
-    assignedUserId: '',
+    assignedUserId: 'unassigned',
     notes: ''
   });
 
@@ -44,7 +44,7 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
         name: '',
         mainIp: '',
         status: 'Test',
-        assignedUserId: '',
+        assignedUserId: 'unassigned',
         notes: ''
       });
     }
@@ -53,17 +53,26 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For new servers, assigned user is required. For editing, it's optional.
+    // Only require name for new servers, all fields for editing
     const isCreating = !server;
-    if (!formData.name.trim() || !formData.mainIp.trim() || (isCreating && !formData.assignedUserId)) {
-      toast({
-        title: "Validation Error",
-        description: isCreating 
-          ? "Please fill in all required fields" 
-          : "Please fill in server name and main IP",
-        variant: "destructive"
-      });
-      return;
+    if (isCreating) {
+      if (!formData.name.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter a server name",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      if (!formData.name.trim() || !formData.mainIp.trim()) {
+        toast({
+          title: "Validation Error", 
+          description: "Please fill in server name and main IP",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (server && onUpdate) {
@@ -73,7 +82,13 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
         description: "Server updated successfully"
       });
     } else {
-      onSave(formData);
+      // Set default values for new servers
+      const serverData = {
+        ...formData,
+        mainIp: formData.mainIp.trim() || '0.0.0.0', // Default IP if not provided
+        assignedUserId: formData.assignedUserId === "unassigned" ? "" : formData.assignedUserId
+      };
+      onSave(serverData);
       toast({
         title: "Success", 
         description: "Server created successfully"
@@ -88,7 +103,7 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
       name: '',
       mainIp: '',
       status: 'Test',
-      assignedUserId: '',
+      assignedUserId: 'unassigned',
       notes: ''
     });
     onClose();
@@ -117,14 +132,16 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="mainIp">Main IP Address *</Label>
+            <Label htmlFor="mainIp">
+              Main IP Address {server && '*'}
+            </Label>
             <Input
               id="mainIp"
               value={formData.mainIp}
               onChange={(e) => setFormData(prev => ({ ...prev, mainIp: e.target.value }))}
-              placeholder="e.g., 192.168.1.10"
+              placeholder={server ? "e.g., 192.168.1.10" : "Optional - can be set later"}
               className="bg-surface border-border font-mono"
-              required
+              required={!!server}
             />
           </div>
 
@@ -147,7 +164,7 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
 
           <div className="space-y-2">
             <Label htmlFor="assignedUser">
-              Assigned User {!server && '*'}
+              Assigned User
             </Label>
             <Select 
               value={formData.assignedUserId || "unassigned"} 
@@ -160,9 +177,7 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
                 <SelectValue placeholder="Select a user" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                {server && (
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                )}
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                 ))}
