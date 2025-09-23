@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Server, User, ServerStatus } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,20 +22,45 @@ const statuses: ServerStatus[] = ['Production', 'Test', 'Down', 'Timed out'];
 export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }: ServerModalProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    name: server?.name || '',
-    mainIp: server?.mainIp || '',
-    status: (server?.status || 'Test') as ServerStatus,
-    assignedUserId: server?.assignedUserId || '',
-    notes: server?.notes || ''
+    name: '',
+    mainIp: '',
+    status: 'Test' as ServerStatus,
+    assignedUserId: '',
+    notes: ''
   });
+
+  // Update form data when server prop changes
+  useEffect(() => {
+    if (server) {
+      setFormData({
+        name: server.name,
+        mainIp: server.mainIp,
+        status: server.status,
+        assignedUserId: server.assignedUserId,
+        notes: server.notes
+      });
+    } else {
+      setFormData({
+        name: '',
+        mainIp: '',
+        status: 'Test',
+        assignedUserId: '',
+        notes: ''
+      });
+    }
+  }, [server]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.mainIp.trim() || !formData.assignedUserId) {
+    // For new servers, assigned user is required. For editing, it's optional.
+    const isCreating = !server;
+    if (!formData.name.trim() || !formData.mainIp.trim() || (isCreating && !formData.assignedUserId)) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: isCreating 
+          ? "Please fill in all required fields" 
+          : "Please fill in server name and main IP",
         variant: "destructive"
       });
       return;
@@ -121,7 +146,9 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignedUser">Assigned User *</Label>
+            <Label htmlFor="assignedUser">
+              Assigned User {!server && '*'}
+            </Label>
             <Select 
               value={formData.assignedUserId} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, assignedUserId: value }))}
@@ -130,6 +157,9 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
                 <SelectValue placeholder="Select a user" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
+                {server && (
+                  <SelectItem value="">Unassigned</SelectItem>
+                )}
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                 ))}
