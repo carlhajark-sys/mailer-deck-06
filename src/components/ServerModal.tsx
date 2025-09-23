@@ -150,15 +150,18 @@ export const ServerModal = ({ isOpen, onClose, server, users, onSave, onUpdate }
               Assigned User {!server && '*'}
             </Label>
             <Select 
-              value={formData.assignedUserId} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, assignedUserId: value }))}
+              value={formData.assignedUserId || "unassigned"} 
+              onValueChange={(value) => setFormData(prev => ({ 
+                ...prev, 
+                assignedUserId: value === "unassigned" ? "" : value 
+              }))}
             >
               <SelectTrigger className="bg-surface border-border">
                 <SelectValue placeholder="Select a user" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
                 {server && (
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                 )}
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
