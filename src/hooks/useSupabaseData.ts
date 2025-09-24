@@ -129,6 +129,9 @@ export const useSupabaseData = () => {
 
   const addServer = useCallback(async (serverData: Omit<Server, 'id' | 'ips'>) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('servers')
         .insert({
@@ -136,7 +139,8 @@ export const useSupabaseData = () => {
           main_ip: serverData.mainIp,
           status: serverData.status,
           assigned_user_id: serverData.assignedUserId || null,
-          notes: serverData.notes
+          notes: serverData.notes,
+          user_id: user.id
         })
         .select()
         .single();

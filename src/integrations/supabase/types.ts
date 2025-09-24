@@ -75,6 +75,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       servers: {
         Row: {
           assigned_user_id: string | null
@@ -85,6 +106,7 @@ export type Database = {
           notes: string | null
           status: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           assigned_user_id?: string | null
@@ -95,6 +117,7 @@ export type Database = {
           notes?: string | null
           status: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           assigned_user_id?: string | null
@@ -105,6 +128,7 @@ export type Database = {
           notes?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
