@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,82 +7,92 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Server } from 'lucide-react';
 
-const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
+export default function Auth() {
+  const { user, loading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    displayName: ''
+  });
+
+  // Redirect if already authenticated
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
-      return;
-    }
+    setIsLoading(true);
 
-    setLoading(true);
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(formData.email, formData.password);
     
     if (error) {
       toast({
-        title: "Sign In Failed",
+        title: "Sign in failed",
         description: error.message,
         variant: "destructive"
       });
     } else {
       toast({
-        title: "Success",
-        description: "Signed in successfully!"
+        title: "Welcome back!",
+        description: "You have been signed in successfully."
       });
       navigate('/');
     }
-    setLoading(false);
+    
+    setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !displayName) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
-      return;
-    }
+    setIsLoading(true);
 
-    setLoading(true);
-    const { error } = await signUp(email, password, displayName);
+    const { error } = await signUp(formData.email, formData.password, formData.displayName);
     
     if (error) {
       toast({
-        title: "Sign Up Failed",
+        title: "Sign up failed",
         description: error.message,
         variant: "destructive"
       });
     } else {
       toast({
-        title: "Success",
-        description: "Account created successfully! You can now sign in."
+        title: "Account created!",
+        description: "Please check your email to verify your account."
       });
     }
-    setLoading(false);
+    
+    setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Server className="h-8 w-8 text-primary" />
+          </div>
           <CardTitle>Server Dashboard</CardTitle>
-          <CardDescription>Sign in to manage your servers</CardDescription>
+          <CardDescription>
+            Sign in to manage your servers and infrastructure
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -98,8 +108,8 @@ const Auth = () => {
                   <Input
                     id="signin-email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     required
                   />
                 </div>
@@ -108,13 +118,13 @@ const Auth = () => {
                   <Input
                     id="signin-password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
                 </Button>
               </form>
@@ -127,9 +137,9 @@ const Auth = () => {
                   <Input
                     id="signup-name"
                     type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    required
+                    value={formData.displayName}
+                    onChange={(e) => handleInputChange('displayName', e.target.value)}
+                    placeholder="Your name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -137,8 +147,8 @@ const Auth = () => {
                   <Input
                     id="signup-email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     required
                   />
                 </div>
@@ -147,13 +157,14 @@ const Auth = () => {
                   <Input
                     id="signup-password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign Up
                 </Button>
               </form>
@@ -163,6 +174,4 @@ const Auth = () => {
       </Card>
     </div>
   );
-};
-
-export default Auth;
+}
