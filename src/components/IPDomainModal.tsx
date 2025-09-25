@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Server, IP, Domain } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,16 +27,40 @@ export const IPDomainModal = ({
   onUpdateDomains 
 }: IPDomainModalProps) => {
   const { toast } = useToast();
+  const [localServer, setLocalServer] = useState<Server>(server);
   const [selectedIP, setSelectedIP] = useState<IP | null>(server.ips[0] || null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newIPs, setNewIPs] = useState('');
   const [editingDomains, setEditingDomains] = useState<{type: 'found' | 'production', value: string} | null>(null);
 
-  const handleAddIPs = () => {
+  // Update local server when server prop changes
+  useEffect(() => {
+    setLocalServer(server);
+    setSelectedIP(prev => {
+      if (!prev) return server.ips[0] || null;
+      return server.ips.find(ip => ip.id === prev.id) || server.ips[0] || null;
+    });
+  }, [server]);
+
+  const handleAddIPs = async () => {
     if (!newIPs.trim()) return;
     
     const ipList = newIPs.split('\n').filter(ip => ip.trim());
     if (ipList.length === 0) return;
+    
+    // Create temporary IPs to update local state immediately
+    const tempIPs: IP[] = ipList.map((ip, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      address: ip.trim(),
+      serverId: server.id,
+      domains: []
+    }));
+    
+    // Update local server state immediately
+    setLocalServer(prev => ({
+      ...prev,
+      ips: [...prev.ips, ...tempIPs]
+    }));
     
     onAddIPs(server.id, ipList);
     setNewIPs('');
@@ -48,7 +72,7 @@ export const IPDomainModal = ({
   };
 
   const handleDeleteIP = (ip: IP) => {
-    if (server.ips.length === 1) {
+    if (localServer.ips.length === 1) {
       toast({
         title: "Cannot Delete",
         description: "Cannot delete the last IP address",
@@ -57,10 +81,17 @@ export const IPDomainModal = ({
       return;
     }
     
-    onDeleteIP(server.id, ip.id);
+    // Update local state immediately
+    setLocalServer(prev => ({
+      ...prev,
+      ips: prev.ips.filter(i => i.id !== ip.id)
+    }));
+    
     if (selectedIP?.id === ip.id) {
-      setSelectedIP(server.ips.find(i => i.id !== ip.id) || null);
+      setSelectedIP(localServer.ips.find(i => i.id !== ip.id) || null);
     }
+    
+    onDeleteIP(server.id, ip.id);
     toast({
       title: "Success",
       description: "IP address deleted"
@@ -88,9 +119,9 @@ export const IPDomainModal = ({
   }, [copyToClipboard]);
 
   const copyAllIPs = useCallback(async () => {
-    const allIPs = server.ips.map(ip => ip.address).join('\n');
+    const allIPs = localServer.ips.map(ip => ip.address).join('\n');
     await copyToClipboard(allIPs, 'All IP addresses');
-  }, [server.ips, copyToClipboard]);
+  }, [localServer.ips, copyToClipboard]);
 
   const getDomainsText = (domains: Domain[], type: 'found' | 'production') => {
     return domains
@@ -143,7 +174,7 @@ export const IPDomainModal = ({
           {/* Left Pane - IP List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">IP Addresses ({server.ips.length})</h3>
+              <h3 className="text-lg font-medium">IP Addresses ({localServer.ips.length})</h3>
               <div className="flex gap-2">
                 <Button
                   onClick={copyAllIPs}
@@ -183,7 +214,7 @@ export const IPDomainModal = ({
             )}
             
             <div className="space-y-2 overflow-y-auto max-h-96">
-              {server.ips.map((ip) => (
+              {localServer.ips.map((ip) => (
                 <div
                   key={ip.id}
                   className={cn(
