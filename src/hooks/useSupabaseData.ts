@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Server, User, IP, Domain, ServerStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SortDirection } from '@/components/SortableTableHead';
+
+export interface SortConfig {
+  key: string;
+  direction: SortDirection;
+}
 
 export const useSupabaseData = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -9,6 +15,9 @@ export const useSupabaseData = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: '', direction: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const { toast } = useToast();
 
   // Fetch all data from Supabase
@@ -75,19 +84,75 @@ export const useSupabaseData = () => {
     fetchData();
   }, [fetchData]);
 
-  const filteredServers = useMemo(() => {
-    if (!searchQuery.trim()) return servers;
+  const filteredAndSortedServers = useMemo(() => {
+    let filtered = servers;
     
-    const query = searchQuery.toLowerCase();
-    return servers.filter(server => {
-      const user = users.find(u => u.id === server.assignedUserId);
-      return (
-        server.name.toLowerCase().includes(query) ||
-        server.mainIp.includes(query) ||
-        user?.name.toLowerCase().includes(query)
-      );
-    });
-  }, [servers, users, searchQuery]);
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = servers.filter(server => {
+        const user = users.find(u => u.id === server.assignedUserId);
+        return (
+          server.name.toLowerCase().includes(query) ||
+          server.mainIp.includes(query) ||
+          user?.name.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (sortConfig.key && sortConfig.direction) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortConfig.key) {
+          case 'name':
+            aValue = a.name.toLowerCase();
+            bValue = b.name.toLowerCase();
+            break;
+          case 'mainIp':
+            aValue = a.mainIp;
+            bValue = b.mainIp;
+            break;
+          case 'status':
+            aValue = a.status;
+            bValue = b.status;
+            break;
+          case 'assignedUser':
+            const userA = users.find(u => u.id === a.assignedUserId);
+            const userB = users.find(u => u.id === b.assignedUserId);
+            aValue = userA?.name.toLowerCase() || 'zzz'; // Put unassigned at end
+            bValue = userB?.name.toLowerCase() || 'zzz';
+            break;
+          case 'ipsCount':
+            aValue = a.ips.length;
+            bValue = b.ips.length;
+            break;
+          case 'domainsCount':
+            aValue = a.ips.reduce((total, ip) => total + ip.domains.length, 0);
+            bValue = b.ips.reduce((total, ip) => total + ip.domains.length, 0);
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [servers, users, searchQuery, sortConfig]);
+
+  const paginatedServers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedServers.slice(startIndex, endIndex);
+  }, [filteredAndSortedServers, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedServers.length / itemsPerPage);
 
   const filteredUsers = useMemo(() => {
     if (!userSearchQuery.trim()) return users;
@@ -503,13 +568,46 @@ export const useSupabaseData = () => {
     }
   }, [toast]);
 
+  const handleSort = useCallback((key: string) => {
+    setSortConfig(prevConfig => {
+      if (prevConfig.key === key) {
+        // Cycle through: asc -> desc -> none
+        if (prevConfig.direction === 'asc') {
+          return { key, direction: 'desc' };
+        } else if (prevConfig.direction === 'desc') {
+          return { key: '', direction: null };
+        }
+      }
+      return { key, direction: 'asc' };
+    });
+    setCurrentPage(1); // Reset to first page when sorting
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleItemsPerPageChange = useCallback((items: number) => {
+    setItemsPerPage(items);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  }, []);
+
   return {
     users: filteredUsers,
-    servers: filteredServers,
+    servers: paginatedServers,
+    allServers: filteredAndSortedServers,
     searchQuery,
     setSearchQuery,
     userSearchQuery,
     setUserSearchQuery,
+    sortConfig,
+    handleSort,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalServers: filteredAndSortedServers.length,
     updateServerStatus,
     addServer,
     updateServer,

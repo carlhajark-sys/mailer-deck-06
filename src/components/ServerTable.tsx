@@ -3,11 +3,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Network, Globe } from 'lucide-react';
 import { StatusDropdown } from './StatusDropdown';
+import { SortableTableHead, SortDirection } from './SortableTableHead';
 import { cn } from '@/lib/utils';
 
 interface ServerTableProps {
   servers: Server[];
   users: User[];
+  sortConfig: { key: string; direction: SortDirection };
+  onSort: (key: string) => void;
   onEditServer: (server: Server) => void;
   onDeleteServer: (serverId: string) => void;
   onManageIPs: (server: Server) => void;
@@ -17,6 +20,8 @@ interface ServerTableProps {
 export const ServerTable = ({ 
   servers, 
   users, 
+  sortConfig,
+  onSort,
   onEditServer, 
   onDeleteServer, 
   onManageIPs,
@@ -36,12 +41,50 @@ export const ServerTable = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-surface-variant">
-            <TableHead className="font-semibold text-foreground">Server Name</TableHead>
-            <TableHead className="font-semibold text-foreground">Main IP</TableHead>
-            <TableHead className="font-semibold text-foreground">Status</TableHead>
-            <TableHead className="font-semibold text-foreground">Assigned To</TableHead>
-            <TableHead className="font-semibold text-foreground text-center">IPs</TableHead>
-            <TableHead className="font-semibold text-foreground text-center">Domains</TableHead>
+            <SortableTableHead 
+              sortKey="name" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+            >
+              Server Name
+            </SortableTableHead>
+            <SortableTableHead 
+              sortKey="mainIp" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+            >
+              Main IP
+            </SortableTableHead>
+            <SortableTableHead 
+              sortKey="status" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+            >
+              Status
+            </SortableTableHead>
+            <SortableTableHead 
+              sortKey="assignedUser" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+            >
+              Assigned To
+            </SortableTableHead>
+            <SortableTableHead 
+              sortKey="ipsCount" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+              className="text-center"
+            >
+              IPs
+            </SortableTableHead>
+            <SortableTableHead 
+              sortKey="domainsCount" 
+              currentSort={sortConfig} 
+              onSort={onSort}
+              className="text-center"
+            >
+              Domains
+            </SortableTableHead>
             <TableHead className="font-semibold text-foreground">Notes</TableHead>
             <TableHead className="font-semibold text-foreground text-center">Actions</TableHead>
           </TableRow>

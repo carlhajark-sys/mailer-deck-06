@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Server } from '@/types';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { ServerTable } from '@/components/ServerTable';
+import { ServerTablePagination } from '@/components/ServerTablePagination';
 import { ServerModal } from '@/components/ServerModal';
 import { IPDomainModal } from '@/components/IPDomainModal';
 import { SearchBar } from '@/components/SearchBar';
@@ -14,8 +15,17 @@ const Index = () => {
   const {
     users,
     servers,
+    allServers,
     searchQuery,
     setSearchQuery,
+    sortConfig,
+    handleSort,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    handlePageChange,
+    handleItemsPerPageChange,
+    totalServers,
     updateServerStatus,
     addServer,
     updateServer,
@@ -108,7 +118,7 @@ const Index = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Servers</p>
-                    <p className="text-2xl font-bold text-foreground">{servers.length}</p>
+                    <p className="text-2xl font-bold text-foreground">{totalServers}</p>
                   </div>
                   <Network className="h-8 w-8 text-primary" />
                 </div>
@@ -119,7 +129,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Production</p>
                     <p className="text-2xl font-bold text-success">
-                      {servers.filter(s => s.status === 'Production').length}
+                      {allServers.filter(s => s.status === 'Production').length}
                     </p>
                   </div>
                   <div className="h-3 w-3 bg-success rounded-full"></div>
@@ -131,7 +141,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Issues</p>
                     <p className="text-2xl font-bold text-error">
-                      {servers.filter(s => s.status === 'Down' || s.status === 'Timed out').length}
+                      {allServers.filter(s => s.status === 'Down' || s.status === 'Timed out').length}
                     </p>
                   </div>
                   <div className="h-3 w-3 bg-error rounded-full"></div>
@@ -143,7 +153,7 @@ const Index = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total IPs</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {servers.reduce((total, server) => total + server.ips.length, 0)}
+                      {allServers.reduce((total, server) => total + server.ips.length, 0)}
                     </p>
                   </div>
                   <div className="h-3 w-3 bg-info rounded-full"></div>
@@ -152,14 +162,26 @@ const Index = () => {
             </div>
 
             {/* Server Table */}
-            <ServerTable
-              servers={servers}
-              users={users}
-              onEditServer={handleEditServer}
-              onDeleteServer={handleDeleteServer}
-              onManageIPs={handleManageIPs}
-              onUpdateStatus={updateServerStatus}
-            />
+            <div className="space-y-0">
+              <ServerTable
+                servers={servers}
+                users={users}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                onEditServer={handleEditServer}
+                onDeleteServer={handleDeleteServer}
+                onManageIPs={handleManageIPs}
+                onUpdateStatus={updateServerStatus}
+              />
+              <ServerTablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalServers={totalServers}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
           </div>
         </main>
       </div>
