@@ -2,7 +2,9 @@ import { User, Server } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Server as ServerIcon } from 'lucide-react';
+import { Edit, Trash2, Server as ServerIcon, Copy, Check, Users } from 'lucide-react';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { cn } from '@/lib/utils';
 
 interface UserTableProps {
   users: User[];
@@ -12,6 +14,8 @@ interface UserTableProps {
 }
 
 export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTableProps) => {
+  const { copyToClipboard, copiedText } = useCopyToClipboard();
+
   const getUserServerCount = (userId: string) => {
     return servers.filter(server => server.assignedUserId === userId).length;
   };
@@ -20,8 +24,13 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
     return servers.filter(server => server.assignedUserId === userId);
   };
 
+  const handleCopyClick = (text: string, label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    copyToClipboard(text, label);
+  };
+
   return (
-    <div className="bg-card rounded-lg elevation-1 overflow-hidden">
+    <div className="bg-card rounded-lg elevation-1 overflow-hidden hover-lift">
       <div className="px-6 py-4 border-b border-border">
         <h2 className="text-lg font-semibold text-foreground">Users</h2>
         <p className="text-sm text-muted-foreground">Manage team members and their server assignments</p>
@@ -37,12 +46,16 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => {
+          {users.map((user, index) => {
             const userServers = getUserServers(user.id);
             const serverCount = userServers.length;
             
             return (
-              <TableRow key={user.id} className="hover:bg-surface-variant/50">
+              <TableRow 
+                key={user.id} 
+                className="hover:bg-surface-variant/50 transition-all duration-200 animate-fade-in group"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -51,8 +64,34 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">ID: {user.id}</p>
+                      <div 
+                        className={cn(
+                          "copy-cell flex items-center gap-2 font-medium text-foreground",
+                          copiedText === user.name && "copied"
+                        )}
+                        onClick={(e) => handleCopyClick(user.name, "User name", e)}
+                        title="Click to copy name"
+                      >
+                        {user.name}
+                        {copiedText === user.name ? (
+                          <Check className="h-3 w-3 text-success" />
+                        ) : (
+                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+                        )}
+                      </div>
+                      <div 
+                        className={cn(
+                          "copy-cell text-sm text-muted-foreground flex items-center gap-2",
+                          copiedText === user.id && "copied"
+                        )}
+                        onClick={(e) => handleCopyClick(user.id, "User ID", e)}
+                        title="Click to copy ID"
+                      >
+                        ID: {user.id}
+                        {copiedText === user.id && (
+                          <Check className="h-3 w-3 text-success" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
@@ -74,7 +113,12 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
                         <Badge 
                           key={server.id} 
                           variant="outline" 
-                          className="text-xs"
+                          className={cn(
+                            "text-xs cursor-pointer transition-colors hover:bg-primary/10 hover:text-primary",
+                            copiedText === server.name && "bg-success/10 text-success"
+                          )}
+                          onClick={(e) => handleCopyClick(server.name, "Server name", e)}
+                          title={`${server.name} (Click to copy)`}
                         >
                           {server.name}
                         </Badge>
@@ -91,7 +135,8 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
                       variant="ghost"
                       size="sm"
                       onClick={() => onEditUser(user)}
-                      className="hover:bg-primary/10 hover:text-primary"
+                      className="hover:bg-primary/10 hover:text-primary btn-ghost-enhanced transition-all duration-200"
+                      title="Edit user"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -99,7 +144,8 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
                       variant="ghost"
                       size="sm"
                       onClick={() => onDeleteUser(user.id)}
-                      className="hover:bg-error/10 hover:text-error"
+                      className="hover:bg-error/10 hover:text-error btn-ghost-enhanced transition-all duration-200"
+                      title="Delete user"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -112,8 +158,16 @@ export const UserTable = ({ users, servers, onEditUser, onDeleteUser }: UserTabl
       </Table>
       
       {users.length === 0 && (
-        <div className="p-8 text-center">
-          <p className="text-muted-foreground">No users found</p>
+        <div className="text-center py-16 text-muted-foreground animate-fade-in">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-surface-variant rounded-full p-4">
+              <Users className="h-12 w-12 opacity-50" />
+            </div>
+            <div>
+              <p className="text-lg font-medium">No users found</p>
+              <p className="text-sm text-muted-foreground/70">Try adjusting your search or add a new user</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

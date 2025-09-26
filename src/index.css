@@ -78,6 +78,15 @@
     --transition-fast: all 0.15s ease-out;
     --transition-normal: all 0.2s ease-out;
     --transition-slow: all 0.3s ease-out;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success) / 0.8));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--surface-variant)));
+    
+    /* Glass effect */
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -119,5 +128,62 @@
   
   .status-timeout {
     @apply bg-warning text-warning-foreground;
+  }
+  
+  /* Click to copy animation */
+  .copy-cell {
+    @apply cursor-pointer transition-all duration-200 rounded-sm px-2 py-1 -mx-2 -my-1;
+  }
+  
+  .copy-cell:hover {
+    @apply bg-primary/5 scale-[1.02];
+  }
+  
+  .copy-cell.copied {
+    @apply bg-success/10 text-success;
+    animation: pulse-success 0.6s ease-out;
+  }
+  
+  @keyframes pulse-success {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); background-color: hsl(var(--success) / 0.2); }
+    100% { transform: scale(1); }
+  }
+  
+  /* Loading skeleton */
+  .skeleton {
+    @apply bg-muted animate-pulse rounded;
+  }
+  
+  /* Smooth hover transitions */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-lg;
+  }
+  
+  /* Button enhancements */
+  .btn-ghost-enhanced {
+    @apply relative overflow-hidden;
+  }
+  
+  .btn-ghost-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 70%);
+    transition: width 0.3s ease, height 0.3s ease;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+  }
+  
+  .btn-ghost-enhanced:hover::before {
+    width: 100px;
+    height: 100px;
   }
 }
